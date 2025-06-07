@@ -410,7 +410,7 @@
             } catch (error) { console.error("Quiz Generation Error:", error); alert(`生成測驗時發生錯誤：${error.message}`); resetApp(); }
         }
         async function callApi(prompt, base64Images = []) {
-            const modelId = "google/gemini-flash-1.5"; 
+            const modelId = "google/gemini-2.0-flash-exp:free"; 
             const payload = { model: modelId, messages: [{ role: "user", content: [{ type: "text", text: prompt }] }], max_tokens: 8192 };
             if (base64Images.length > 0) { base64Images.forEach(imgBase64 => { payload.messages[0].content.push({ type: "image_url", image_url: { url: `data:image/jpeg;base64,${imgBase64}` } }); }); } 
             else { payload.response_format = { type: "json_object" }; }
