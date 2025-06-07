@@ -252,8 +252,9 @@
             explanationPanel = document.getElementById('explanation-panel');
 
         // --- APP STATE ---
+        const delay = ms => new Promise(res => setTimeout(res, ms));
         let uploadedFiles = [], quizData = [], currentQuestionIndex = 0, ocrText = "", isAnswerRevealed = false;
-        
+
         // --- SPEECH STATE ---
         let isVoiceModeEnabled = false, speechRecognition, isListening = false, cantoneseVoice = null;
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -388,26 +389,41 @@
         function handleQuizImport(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const importedData = JSON.parse(event.target.result); if (importedData && Array.isArray(importedData) && importedData.length > 0 && 'question' in importedData[0]) { quizData = importedData; localStorage.setItem('aiQuizData', JSON.stringify(quizData)); showResults(); } else { throw new Error('Invalid quiz file format.'); } } catch (error) { alert(`導入失敗：${error.message}`); } }; reader.readAsText(file); }
         function handleQuizExport() { if (quizData.length === 0) { alert('沒有可導出的測驗。'); return; } const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(quizData, null, 2)); const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", `ai-quiz_${new Date().toISOString()}.json`); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove(); }
 
-        // --- API & QUIZ GENERATION (Unchanged) ---
-        async function runQuizGeneration() {
-            if (uploadedFiles.length === 0) return;
-            showSection(loadingSection);
-            ocrText = "";
-            try {
-                loadingStatus.textContent = `步驟 1/3: 正在準備圖片...`;
-                const allBase64Images = await Promise.all(uploadedFiles.map(file => fileToBase64(file)));
-                loadingStatus.textContent = `步驟 2/3: AI 正在讀取所有圖片內容...`;
-                ocrText = await getOcrResult(allBase64Images);
-                loadingStatus.textContent = `步驟 3/3: AI 正在生成測驗題目...`;
-                const mcqJsonString = await generateMcqs(ocrText, numQuestionsInput.value);
-                try {
-                    const parsedData = JSON.parse(mcqJsonString);
-                    if (!parsedData.questions || !Array.isArray(parsedData.questions) || parsedData.questions.length === 0) { throw new Error("API 未返回有效的題目陣列。"); }
-                    quizData = parsedData.questions.map(q => ({ ...q, userAnswer: null, tags: Array.isArray(q.tags) ? q.tags.slice(0, 2) : [] }));
-                } catch (e) { console.error("JSON Parsing Error:", e, "Received:", mcqJsonString); throw new Error(`AI 返回的資料格式不正確，無法解析為測驗題目。`); }
-                startQuiz();
-            } catch (error) { console.error("Quiz Generation Error:", error); alert(`生成測驗時發生錯誤：${error.message}`); resetApp(); }
+        // --- API & QUIZ GENERATION (Unchanged) ---// 完整的、已修正的 runQuizGeneration 函式 ✅
+async function runQuizGeneration() {
+    if (uploadedFiles.length === 0) return;
+    showSection(loadingSection);
+    ocrText = "";
+    try {
+        loadingStatus.textContent = `步驟 1/3: 正在準備圖片...`;
+        const allBase64Images = await Promise.all(uploadedFiles.map(file => fileToBase64(file)));
+        
+        loadingStatus.textContent = `步驟 2/3: AI 正在讀取所有圖片內容...`;
+        ocrText = await getOcrResult(allBase64Images); // <--- 第一次 API 呼叫
+
+        loadingStatus.textContent = `步驟 3/3: AI 正在生成測驗題目...`;
+
+        // ⚠️ 關鍵修正：在兩次呼叫之間等待 1.5 秒 ⚠️
+        await delay(1500); 
+
+        const mcqJsonString = await generateMcqs(ocrText, numQuestionsInput.value); // <--- 第二次 API 呼叫
+        
+        try {
+            const parsedData = JSON.parse(mcqJsonString);
+            if (!parsedData.questions || !Array.isArray(parsedData.questions) || parsedData.questions.length === 0) { throw new Error("API 未返回有效的題目陣列。"); }
+            quizData = parsedData.questions.map(q => ({ ...q, userAnswer: null, tags: Array.isArray(q.tags) ? q.tags.slice(0, 2) : [] }));
+        } catch (e) {
+            console.error("JSON Parsing Error:", e, "Received:", mcqJsonString);
+            throw new Error(`AI 返回的資料格式不正確，無法解析為測驗題目。`);
         }
+        startQuiz();
+    } catch (error) {
+        console.error("Quiz Generation Error:", error);
+        alert(`生成測驗時發生錯誤：${error.message}`);
+        resetApp();
+    }
+}
+        
 // 已修正的 callApi 函式 ✅
 async function callApi(prompt, base64Images = []) {
     const modelId = "google/gemini-2.0-flash-exp:free";
