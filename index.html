@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THIS-AI 試卷生成器</title>
+    <title>AI 知識點測驗與試卷產生器 (專業版)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -41,15 +41,11 @@
         .btn { display: inline-block; width: 100%; padding: 14px; background: var(--primary-color); color: white; border: none; border-radius: 50px; font-size: 1.15rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(30, 136, 229, 0.25); text-align: center; }
         .btn:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(13, 71, 161, 0.3); }
         .btn:disabled { background: #90caf9; cursor: not-allowed; box-shadow: none; transform: none; }
-        .btn-secondary { background: var(--secondary-color); }
-        .btn-secondary:hover:not(:disabled) { background: #5a6268; }
         .btn-success { background: var(--success-color); box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25); }
         .btn-success:hover:not(:disabled) { background: var(--success-dark); box-shadow: 0 6px 16px rgba(30, 126, 52, 0.3); }
-        .btn-warning { background: #ffc107; color: #212529; }
-        .btn-warning:hover:not(:disabled) { background: #e0a800; }
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: 600; margin-bottom: 5px; color: var(--primary-dark); }
-        input[type="number"], input[type="text"], select { width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #ddd; font-size: 1rem; }
+        select { width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #ddd; font-size: 1rem; }
         .tab-container { display: flex; border: 1px solid var(--primary-color); border-radius: 50px; overflow: hidden; margin-bottom: 25px; }
         .tab-btn { flex: 1; padding: 12px 15px; cursor: pointer; background: transparent; border: none; font-size: 1.05rem; font-weight: 600; color: var(--primary-color); text-align: center; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .tab-btn:not(.active):hover { background-color: var(--light-blue-bg); }
@@ -64,18 +60,48 @@
         .remove-image-btn { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; z-index: 10; }
         .knowledge-point-selectors { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
         @media (min-width: 576px) { .knowledge-point-selectors { grid-template-columns: 1fr 1fr; } }
-        .kp-container { border: 1px solid #ddd; border-radius: 8px; padding: 15px; height: 280px; overflow-y: auto; background: #fafafa; }
+        .kp-container { border: 1px solid #ddd; border-radius: 8px; padding: 15px; height: 320px; overflow-y: auto; background: #fafafa; }
         .kp-container h4 { margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; color: var(--primary-dark); position: sticky; top: -15px; background: #fafafa; z-index: 1; }
-        .kp-label { display: block; margin-bottom: 8px; font-weight: normal; cursor: pointer; }
+        
+        #kp-grade-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background-color: var(--light-blue-bg); border-radius: 8px; }
+        .grade-label { display: block; font-weight: normal; cursor: pointer; background-color: white; padding: 5px 12px; border-radius: 20px; border: 1px solid #ddd; transition: all 0.2s ease; }
+        .grade-label input { display: none; }
+        .grade-label:hover { border-color: var(--primary-color); }
+        .grade-label.checked { background-color: var(--primary-color); color: white; border-color: var(--primary-dark); }
+        
+        .kp-grade-heading { font-size: 1rem; font-weight: bold; color: var(--primary-dark); margin-top: 15px; margin-bottom: 5px; padding-left: 5px; border-left: 3px solid var(--primary-color); }
+        .kp-grade-heading:first-child { margin-top: 0; }
+        .kp-label { display: block; margin-bottom: 8px; font-weight: normal; cursor: pointer; padding-left: 5px; }
         .kp-label input { margin-right: 8px; }
+        
         .action-buttons { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media (min-width: 576px) { .action-buttons { grid-template-columns: 1fr 1fr; } }
         #loading-section { text-align: center; padding: 40px 20px; }
         .spinner { border: 5px solid rgba(30, 136, 229, 0.2); border-top: 5px solid var(--primary-color); border-radius: 50%; width: 50px; height: 50px; animation: spin 1.2s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         #exam-result-code { background-color: #2d2d2d; color: #f8f8f2; padding: 20px; border-radius: 8px; max-height: 50vh; overflow-y: auto; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; margin-bottom: 15px; }
+        
+        .result-section-title { font-size: 1.4rem; color: var(--primary-dark); border-bottom: 2px solid var(--light-blue-bg); padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px; }
         .review-item { background: var(--light-blue-bg); border-radius: 12px; padding: 15px; margin-bottom: 15px; border-left: 5px solid; }
+        .review-item.correct { border-color: #28a745; }
+        .review-item.incorrect { border-color: #dc3545; }
         .review-question { font-weight: bold; margin-bottom: 10px; }
+        .review-answer, .review-explanation { margin-top: 10px; }
+        .review-explanation { font-style: italic; color: #555; }
+        #quiz-progress { font-weight: 600; color: var(--primary-dark); margin-bottom: 15px; text-align: center; background: var(--light-blue-bg); padding: 8px; border-radius: 20px; }
+        #question-text { font-size: 1.25rem; font-weight: 500; flex-grow: 1; margin-bottom: 20px; }
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-label { display: block; background: var(--light-blue-bg); padding: 15px; border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .option-label:hover { border-color: var(--primary-color); }
+        .option-label.selected { background-color: #d1eaff; border-color: var(--primary-dark); font-weight: bold; }
+        .option-label.correct { background-color: #d4edda; border-color: #28a745; }
+        .option-label.incorrect { background-color: #f8d7da; border-color: #dc3545; }
+        .option-label input { display: none; }
+        .option-key { font-weight: bold; margin-right: 10px; color: var(--primary-dark); }
+        #explanation-panel { background: #fffde7; border: 1px solid #fff9c4; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        #quiz-navigation { margin-top: 25px; display: flex; justify-content: space-between; gap: 15px; }
+        #overall-score { text-align: center; font-size: 1.8rem; font-weight: bold; color: var(--primary-dark); margin-bottom: 25px; }
+        
         footer { text-align: center; padding: 20px 0; margin-top: 40px; color: var(--secondary-color); font-size: 0.9rem; }
     </style>
 </head>
@@ -83,7 +109,7 @@
     <div class="container">
         <header>
             <div class="logo">
-                <h1>THIS-AI 試卷生成器</h1>
+                <h1>AI 知識點測驗與試卷產生器</h1>
             </div>
         </header>
 
@@ -94,7 +120,6 @@
                     <button class="tab-btn active" data-tab="upload-materials"><i class="fas fa-upload"></i>上傳資料模式</button>
                     <button class="tab-btn" data-tab="select-knowledge-points"><i class="fas fa-check-square"></i>知識點模式</button>
                 </div>
-
                 <div id="tab-content-upload-materials" class="tab-content">
                     <p>上傳圖片作為考試範圍。適用於根據特定教材、筆記或舊試卷出題。</p>
                     <div class="upload-area" id="upload-area">
@@ -104,18 +129,15 @@
                     </div>
                     <div id="image-preview-container"></div>
                 </div>
-                
                 <div id="tab-content-select-knowledge-points" class="tab-content hidden">
                      <p>直接從課程大綱選擇知識點作為考試範圍，AI 將據此生成題目。</p>
-                     <div class="knowledge-point-selectors">
-                        <div class="form-group">
-                            <label for="kp-subject">學科</label>
-                            <select id="kp-subject"></select>
-                        </div>
-                        <div class="form-group">
-                            <label for="kp-grade">年級</label>
-                            <select id="kp-grade"></select>
-                        </div>
+                     <div class="form-group">
+                        <label for="kp-subject">學科</label>
+                        <select id="kp-subject"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>年級 (可多選)</label>
+                        <div id="kp-grade-container"></div>
                     </div>
                     <div class="knowledge-point-selectors">
                         <div class="kp-container" id="kp-major-container">
@@ -144,10 +166,53 @@
             </div>
         </section>
 
-        <!-- Other sections -->
-        <section id="loading-section" class="hidden">...</section>
-        <section id="exam-result-section" class="hidden">...</section>
-        <section id="results-section" class="hidden">...</section>
+        <!-- All other sections are hidden by default and will be populated by JS -->
+        <section id="quiz-section" class="hidden">
+            <div class="card">
+                <div id="quiz-progress"></div>
+                <p id="question-text"></p>
+                <div class="options-container" id="options-container"></div>
+                <div id="explanation-panel" class="hidden"></div>
+                <div id="quiz-navigation">
+                    <button class="btn btn-secondary" id="prev-question-btn">上一題</button>
+                    <button class="btn" id="next-question-btn">下一題</button>
+                    <button class="btn btn-success hidden" id="finish-quiz-btn">完成測驗</button>
+                </div>
+            </div>
+        </section>
+        <section id="results-section" class="hidden">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-poll"></i> 測驗結果</h2>
+                <p id="overall-score"></p>
+                <h3 class="result-section-title">題目回顧</h3>
+                <div id="review-container"></div>
+                <div class="action-buttons" style="margin-top: 20px;">
+                    <button class="btn btn-warning" id="export-quiz-btn"><i class="fas fa-file-export"></i> 導出結果 (JSON)</button>
+                    <button class="btn" id="quiz-restart-btn"> <i class="fas fa-redo"></i> 返回主頁 </button>
+                </div>
+            </div>
+        </section>
+        <section id="loading-section" class="hidden">
+            <div class="card">
+                <div class="spinner"></div>
+                <h2 id="loading-status">正在為您生成...</h2>
+                <p id="loading-subtitle">AI 正在努力工作中，請稍候。</p>
+            </div>
+        </section>
+        <section id="exam-result-section" class="hidden">
+            <div class="card">
+                <h2 class="card-title"><i class="fab fa-python"></i> Python 試卷腳本已生成</h2>
+                <p>請確保你已安裝函式庫 (`pip install python-docx matplotlib pillow reportlab`)，然後執行此腳本即可生成學生卷和教師卷。</p>
+                <pre><code id="exam-result-code"></code></pre>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="copy-exam-code-btn"><i class="fas fa-copy"></i> 複製代碼</button>
+                    <button class="btn btn-success" id="download-exam-script-btn"><i class="fas fa-download"></i> 下載 .py 檔案</button>
+                </div>
+                 <div class="action-buttons" style="margin-top: 20px;">
+                    <button class="btn" id="exam-restart-btn"> <i class="fas fa-redo"></i> 返回主頁 </button>
+                </div>
+            </div>
+        </section>
         
         <footer>
             Designed by Nathan Yuen. All Rights Reserved.
@@ -155,7 +220,7 @@
     </div>
 
     <script>
-        // --- KNOWLEDGE POINT DATABASE & CONSTANTS ---
+        // --- PROFESSIONAL & COMPREHENSIVE KNOWLEDGE POINT DATABASE ---
         const KNOWLEDGE_POINTS = {
             Math: {
                 P1: {"數範疇": ["100以內的數(數、讀、寫)", "單數與雙數", "數序與比較", "20以內加法", "20以內減法"], "圖形與空間範疇": ["基本平面圖形(圓、三角、正方、長方)", "基本立體圖形(球、正方、長方、圓柱)", "長度和距離的直接比較"], "度量範疇": ["香港流通貨幣(元、角)", "星期與日期", "閱讀鐘面(小時)"], "應用題": ["一步加減法應用題"]},
@@ -208,12 +273,12 @@
                 P6: {"漢語拼音": ["總複習與難點辨析"], "聽說認讀": ["環境保護", "中國文化簡介", "我的夢想"]},
             },
             GeneralStudies: {
-                P1: {"健康與生活": ["認識身體", "個人衛生習慣", "我的情緒"], "生活中的人與事": ["我的家庭與角色", "我的學校生活", "社區裡的幫手"], "自然與科技": ["四季的變化", "常見的動植物", "天氣與衣著"]},
-                P2: {"健康與生活": ["均衡飲食金字塔", "遊戲安全", "愛護眼睛"], "生活中的人與事": ["社區設施與規則", "鄰里關係", "香港的節日"], "自然與科技": ["水的形態變化", "天氣報告", "廢物分類"]},
-                P3: {"健康與生活": ["傳染病預防", "食物的處理", "做個情緒小主人"], "生活中的人與事": ["消費與儲蓄", "香港的交通網絡", "區議會與社區事務"], "自然與科技": ["空氣的特性", "聲音的產生", "光的傳播與影子"]},
-                P4: {"健康與生活": ["青春期(生理變化)", "預防家居意外", "選擇健康小食"], "生活中的人與事": ["香港的過去(漁村)", "香港的政府架構", "香港特色建築"], "自然與科技": ["電的簡單電路", "簡單機械(槓桿、斜面)", "電腦與互聯網"]},
-                P5: {"健康與生活": ["藥物教育", "健康生活模式的建立", "壓力管理"], "生活中的人與事": ["香港的經濟(製造業、服務業)", "中國的地理與主要城市", "中國的傳統文化(書法、國畫)"], "自然與科技": ["綠色生活與環保", "資訊與通訊科技的影響", "天氣與氣候"]},
-                P6: {"健康與生活": ["精神健康", "急救知識與求助方法", "網絡欺凌"], "生活中的人與事": ["香港與世界的聯繫(貿易、旅遊)", "世界公民的責任", "聯合國與世界組織"], "自然與科技": ["能源的種類與危機", "可持續發展", "太空探索"]}
+                P1: {"健康與生活": ["認識我們的身體", "保持個人衛生", "健康飲食習慣", "情緒的認識與表達", "運動與休息"], "人與環境": ["我的家庭", "我的學校生活", "社區中的人和事", "愛護公物", "天氣與衣著"], "科學與科技": ["常見的動植物", "物料的特性(軟硬、粗滑)"], "國民身份認同與中華文化": ["認識國旗與區旗", "香港的節日"]},
+                P2: {"健康與生活": ["飲食金字塔", "遊戲安全", "保護感官", "簡單的急救"], "人與環境": ["社區設施與服務", "鄰里關係", "香港的交通工具", "愛護環境(節約用水、廢物分類)"], "科學與科技": ["水的形態變化", "天氣報告", "光和影", "聲音的產生"], "國民身份認同與中華文化": ["香港的特色地標", "中國傳統節日(農曆新年、中秋節)"]},
+                P3: {"健康與生活": ["預防傳染病", "食物的儲存與處理", "選擇健康零食"], "人與環境": ["我們的社區(十八區)", "區議會的角色", "理財入門(消費與儲蓄)"], "科學與科技": ["空氣的特性", "風的形成與風向", "簡單的電路", "磁鐵的特性"], "國民身份認同與中華文化": ["香港簡史(漁村到都市)", "中國的概況(首都、主要城市)"]},
+                P4: {"健康與生活": ["青春期(生理心理變化)", "預防家居意外", "運動益處與安全", "選擇健康的飲食模式"], "人與環境": ["香港的政府架構", "香港的經濟發展", "保護水資源", "噪音污染"], "科學與科技": ["植物的生長", "簡單機械(槓桿、滑輪)", "互聯網的應用與安全"], "國民身份認同與中華文化": ["中國的世界遺產", "中國的四大發明"]},
+                P5: {"健康與生活": ["善用藥物", "精神健康(壓力處理)", "預防意外(交通、水上安全)", "遠離煙酒和毒品"], "人與環境": ["香港的社會保障", "香港與內地的關係", "全球化的影響", "氣候變化"], "科學與科技": ["資訊與通訊科技的發展", "可再生能源", "生物多樣性"], "國民身份認同與中華文化": ["認識《基本法》", "中國的民族"]},
+                P6: {"健康與生活": ["都市病(癌症、心臟病、中風)", "健康的生活方式", "急救知識(續)", "網絡世界的挑戰(沉迷、欺凌)"], "人與環境": ["世界公民的責任", "可持續發展", "國際組織(聯合國、世界衛生組織)"], "科學與科技": ["太空探索", "基因與遺傳", "人工智能簡介"], "國民身份認同與中華文化": ["一國兩制", "國家安全的意義"]}
             }
         };
 
@@ -223,11 +288,12 @@
         const configSection = document.getElementById('config-section');
         const loadingSection = document.getElementById('loading-section');
         const examResultSection = document.getElementById('exam-result-section');
+        const quizSection = document.getElementById('quiz-section');
         const resultsSection = document.getElementById('results-section');
         const tabButtons = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
         const kpSubject = document.getElementById('kp-subject');
-        const kpGrade = document.getElementById('kp-grade');
+        const kpGradeContainer = document.getElementById('kp-grade-container');
         const kpMajorContainer = document.getElementById('kp-major-checkboxes');
         const kpMinorContainer = document.getElementById('kp-minor-checkboxes');
         const generateQuizBtn = document.getElementById('generate-quiz-btn');
@@ -240,16 +306,27 @@
         const downloadExamScriptBtn = document.getElementById('download-exam-script-btn');
         const examRestartBtn = document.getElementById('exam-restart-btn');
         const quizRestartBtn = document.getElementById('quiz-restart-btn');
+        const exportQuizBtn = document.getElementById('export-quiz-btn');
+        const reviewContainer = document.getElementById('review-container');
+        const overallScore = document.getElementById('overall-score');
+        const quizProgress = document.getElementById('quiz-progress');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const explanationPanel = document.getElementById('explanation-panel');
+        const prevQuestionBtn = document.getElementById('prev-question-btn');
+        const nextQuestionBtn = document.getElementById('next-question-btn');
+        const finishQuizBtn = document.getElementById('finish-quiz-btn');
 
         let currentTab = 'upload-materials';
         let uploadedFiles = [];
         let quizData = [];
-
+        let currentQuestionIndex = 0;
+        let isAnswerRevealed = false;
+        
         // --- INITIALIZATION ---
         function init() {
             tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
-            kpSubject.addEventListener('change', populateGrades);
-            kpGrade.addEventListener('change', populateMajorKnowledgePoints);
+            kpSubject.addEventListener('change', populateGradeCheckboxes);
             uploadArea.addEventListener('click', () => imageUpload.click());
             imageUpload.addEventListener('change', (e) => handleFiles(e.target.files));
             uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--primary-dark)'; });
@@ -261,7 +338,11 @@
             copyExamCodeBtn.addEventListener('click', handleCopyCode);
             downloadExamScriptBtn.addEventListener('click', handleDownloadScript);
             examRestartBtn.addEventListener('click', resetApp);
-            if(quizRestartBtn) quizRestartBtn.addEventListener('click', resetApp);
+            quizRestartBtn.addEventListener('click', resetApp);
+            exportQuizBtn.addEventListener('click', handleQuizExport);
+            nextQuestionBtn.addEventListener('click', showNextQuestion);
+            prevQuestionBtn.addEventListener('click', showPrevQuestion);
+            finishQuizBtn.addEventListener('click', showResults);
             
             populateSubjects();
             updateGenerateButtonState();
@@ -278,22 +359,56 @@
         function populateSubjects() {
             const subjects = Object.keys(KNOWLEDGE_POINTS);
             kpSubject.innerHTML = subjects.map(s => `<option value="${s}">${getSubjectName(s)}</option>`).join('');
-            populateGrades();
+            populateGradeCheckboxes();
         }
 
-        function populateGrades() {
-            const selectedSubject = kpSubject.value;
-            const grades = Object.keys(KNOWLEDGE_POINTS[selectedSubject] || {});
-            kpGrade.innerHTML = grades.map(g => `<option value="${g}">${g}</option>`).join('');
+        function populateGradeCheckboxes() {
+            const subject = kpSubject.value;
+            const grades = Object.keys(KNOWLEDGE_POINTS[subject] || {});
+            kpGradeContainer.innerHTML = grades.map(grade => `
+                <label class="grade-label" for="grade-${grade}">
+                    <input type="checkbox" name="kp-grade" id="grade-${grade}" value="${grade}">
+                    ${getGradeName(grade)}
+                </label>
+            `).join('');
+            document.querySelectorAll('input[name="kp-grade"]').forEach(chk => {
+                chk.addEventListener('change', (e) => {
+                    e.currentTarget.parentElement.classList.toggle('checked');
+                    populateMajorKnowledgePoints();
+                });
+            });
             populateMajorKnowledgePoints();
         }
-
+        
         function populateMajorKnowledgePoints() {
             const subject = kpSubject.value;
-            const grade = kpGrade.value;
-            const majors = KNOWLEDGE_POINTS[subject]?.[grade] ? Object.keys(KNOWLEDGE_POINTS[subject][grade]) : [];
-            kpMajorContainer.innerHTML = majors.map(major => `<label class="kp-label"><input type="checkbox" name="kp-major" value="${major}"> ${major}</label>`).join('');
-            kpMinorContainer.innerHTML = '<p style="color: #888; text-align: center; margin-top: 20px;">請先選擇左方的大類</p>';
+            const selectedGrades = Array.from(document.querySelectorAll('input[name="kp-grade"]:checked')).map(chk => chk.value);
+            
+            kpMajorContainer.innerHTML = '';
+            
+            if (selectedGrades.length > 0) {
+                selectedGrades.forEach(grade => {
+                    const majors = KNOWLEDGE_POINTS[subject][grade] ? Object.keys(KNOWLEDGE_POINTS[subject][grade]) : [];
+                    if (majors.length > 0) {
+                        const gradeHeading = document.createElement('h5');
+                        gradeHeading.className = 'kp-grade-heading';
+                        gradeHeading.textContent = getGradeName(grade);
+                        kpMajorContainer.appendChild(gradeHeading);
+
+                        majors.forEach(major => {
+                            const label = document.createElement('label');
+                            label.className = 'kp-label';
+                            label.innerHTML = `<input type="checkbox" name="kp-major" value="${major}" data-grade="${grade}"> ${major}`;
+                            kpMajorContainer.appendChild(label);
+                        });
+                    }
+                });
+            } else {
+                 kpMajorContainer.innerHTML = '<p style="color: #888; text-align: center; margin-top: 20px;">請先選擇上方年級</p>';
+            }
+
+            populateMinorKnowledgePoints();
+            
             document.querySelectorAll('input[name="kp-major"]').forEach(chk => {
                 chk.addEventListener('change', () => { populateMinorKnowledgePoints(); updateGenerateButtonState(); });
             });
@@ -302,14 +417,15 @@
 
         function populateMinorKnowledgePoints() {
             const subject = kpSubject.value;
-            const grade = kpGrade.value;
-            const selectedMajors = Array.from(document.querySelectorAll('input[name="kp-major"]:checked')).map(chk => chk.value);
+            const selectedMajors = Array.from(document.querySelectorAll('input[name="kp-major"]:checked'));
             
             let minorsHTML = '';
             if (selectedMajors.length > 0) {
-                 selectedMajors.forEach(major => {
+                 selectedMajors.forEach(majorCheckbox => {
+                    const major = majorCheckbox.value;
+                    const grade = majorCheckbox.dataset.grade;
                     const minors = KNOWLEDGE_POINTS[subject]?.[grade]?.[major] || [];
-                    minorsHTML += minors.map(minor => `<label class="kp-label" data-minor-for="${major}"><input type="checkbox" name="kp-minor" value="${minor}" checked> ${minor}</label>`).join('');
+                    minorsHTML += minors.map(minor => `<label class="kp-label" data-minor-for="${grade}-${major}"><input type="checkbox" name="kp-minor" value="${minor}" checked> ${minor}</label>`).join('');
                 });
             } else {
                  minorsHTML = '<p style="color: #888; text-align: center; margin-top: 20px;">請先選擇左方的大類</p>';
@@ -349,13 +465,17 @@
         }
         
         function showSection(sectionToShow) {
-            [configSection, loadingSection, examResultSection, resultsSection].forEach(s => s.classList.add('hidden'));
+            [configSection, loadingSection, examResultSection, quizSection, resultsSection].forEach(s => {
+                if(s) s.classList.add('hidden')
+            });
             if (sectionToShow) sectionToShow.classList.remove('hidden');
         }
 
         function resetApp() {
             uploadedFiles = [];
             quizData = [];
+            currentQuestionIndex = 0;
+            isAnswerRevealed = false;
             imageUpload.value = '';
             renderImagePreviews();
             switchTab('upload-materials');
@@ -368,6 +488,11 @@
             const names = { Math: '數學', Chinese: '中文', English: '英文', Putonghua: '普通話', GeneralStudies: '常識' };
             return names[key] || key;
         }
+        
+        function getGradeName(key) {
+             const names = { P1: '小一', P2: '小二', P3: '小三', P4: '小四', P5: '小五', P6: '小六', S1: '中一', S2: '中二', S3: '中三', S4: '中四', S5: '中五', S6: '中六' };
+             return names[key] || key;
+        }
 
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
@@ -379,10 +504,10 @@
         }
         
         // --- API & GENERATION ---
-        
         async function runGeneration(type) {
             showSection(loadingSection);
             let userPrompt, systemPrompt, responseFormat = null, images = [];
+            const selectedGrades = Array.from(document.querySelectorAll('input[name="kp-grade"]:checked')).map(chk => getGradeName(chk.value));
 
             if (currentTab === 'upload-materials') {
                 if (uploadedFiles.length === 0) { alert('請先上傳圖片。'); resetApp(); return; }
@@ -391,7 +516,7 @@
             } else {
                 const selectedMinorKPs = Array.from(document.querySelectorAll('input[name="kp-minor"]:checked')).map(chk => chk.value);
                 if (selectedMinorKPs.length === 0) { alert('請先選擇至少一個知識點細項。'); resetApp(); return; }
-                userPrompt = `**學科:** ${getSubjectName(kpSubject.value)}\n**年級:** ${kpGrade.value}\n**考試範圍 (必須嚴格遵守):** ${selectedMinorKPs.join(', ')}`;
+                userPrompt = `**學科:** ${getSubjectName(kpSubject.value)}\n**年級:** ${selectedGrades.join(', ')}\n**考試範圍 (必須嚴格遵守):** ${selectedMinorKPs.join(', ')}`;
             }
             
             if (type === 'quiz') {
@@ -428,9 +553,9 @@
                     };
                     if (responseFormat) payload.response_format = responseFormat;
 
-                    const response = await fetch("https://aiquiz.ycm927.workers.dev", { // CORRECTED: Using the worker URL
+                    const response = await fetch("https://aiquiz.ycm927.workers.dev", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" }, // CORRECTED: Simplified headers for worker
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload)
                     });
 
@@ -452,8 +577,8 @@
                 try {
                     const parsedData = JSON.parse(result);
                     if (!parsedData.questions || !Array.isArray(parsedData.questions)) throw new Error("Invalid JSON structure");
-                    quizData = parsedData.questions;
-                    showQuizResults(); 
+                    quizData = parsedData.questions.map(q => ({ ...q, userAnswer: null }));
+                    startQuiz();
                 } catch (e) {
                     console.error("JSON Parsing Error:", e);
                     alert("AI 返回的測驗資料格式不正確，無法解析。");
@@ -468,17 +593,129 @@
             }
         }
         
-        function showQuizResults() {
-             const reviewContainer = document.getElementById('review-container');
-             reviewContainer.innerHTML = '';
-             quizData.forEach((q, index) => {
+        // --- FULL QUIZ LOGIC ---
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            isAnswerRevealed = false;
+            showSection(quizSection);
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            isAnswerRevealed = false;
+            explanationPanel.classList.add('hidden');
+            const q = quizData[currentQuestionIndex];
+            quizProgress.textContent = `問題 ${currentQuestionIndex + 1} / ${quizData.length}`;
+            questionText.textContent = q.question;
+            optionsContainer.innerHTML = '';
+            
+            const optionKeys = ['A', 'B', 'C', 'D'];
+            const optionsIsArray = Array.isArray(q.options);
+
+            optionKeys.forEach((key, index) => {
+                const optionText = optionsIsArray ? q.options[index] : q.options[key];
+                if (optionText === undefined) return;
+                const optionId = `q${currentQuestionIndex}_${key}`;
+                const label = document.createElement('label');
+                label.className = 'option-label';
+                label.htmlFor = optionId;
+                label.innerHTML = `<input type="radio" name="q${currentQuestionIndex}" id="${optionId}" value="${key}"><span class="option-key">${key}.</span><span>${optionText}</span>`;
+                optionsContainer.appendChild(label);
+                
+                if (q.userAnswer) {
+                    isAnswerRevealed = true;
+                    const isCorrect = q.userAnswer.toUpperCase() === q.answer.toUpperCase();
+                    if (key === q.answer) label.classList.add('correct');
+                    if (key === q.userAnswer && !isCorrect) label.classList.add('incorrect');
+                    if (key === q.userAnswer) label.classList.add('selected');
+                }
+            });
+            
+            if(isAnswerRevealed) explanationPanel.classList.remove('hidden');
+
+            optionsContainer.querySelectorAll('.option-label').forEach(label => {
+                label.addEventListener('click', () => {
+                    if (quizData[currentQuestionIndex].userAnswer) return;
+                    selectAnswer(label.querySelector('input').value);
+                });
+            });
+
+            updateNavigationButtons();
+        }
+
+        function selectAnswer(selectedValue) {
+            quizData[currentQuestionIndex].userAnswer = selectedValue;
+            checkAnswer(selectedValue);
+        }
+
+        function checkAnswer(userAnswer) {
+            isAnswerRevealed = true;
+            const q = quizData[currentQuestionIndex];
+            const isCorrect = userAnswer.toUpperCase() === q.answer.toUpperCase();
+            
+            optionsContainer.querySelectorAll('.option-label').forEach(label => {
+                const optionKey = label.querySelector('input').value;
+                if (optionKey === q.answer) label.classList.add('correct');
+                if (optionKey === userAnswer && !isCorrect) label.classList.add('incorrect');
+                if (optionKey === userAnswer) label.classList.add('selected');
+            });
+            
+            explanationPanel.innerHTML = `<strong>答案解釋：</strong> ${q.explanation}`;
+            explanationPanel.classList.remove('hidden');
+        }
+
+        function updateNavigationButtons() {
+            prevQuestionBtn.disabled = currentQuestionIndex === 0;
+            nextQuestionBtn.classList.toggle('hidden', currentQuestionIndex === quizData.length - 1);
+            finishQuizBtn.classList.toggle('hidden', currentQuestionIndex !== quizData.length - 1);
+        }
+
+        function showNextQuestion() { if (currentQuestionIndex < quizData.length - 1) { currentQuestionIndex++; displayQuestion(); } }
+        function showPrevQuestion() { if (currentQuestionIndex > 0) { currentQuestionIndex--; displayQuestion(); } }
+        
+        function showResults() {
+            showSection(resultsSection);
+            let correctAnswers = 0;
+            quizData.forEach(q => { if (q.userAnswer === q.answer) correctAnswers++; });
+            const scorePercentage = quizData.length > 0 ? (correctAnswers / quizData.length) * 100 : 0;
+            overallScore.textContent = `總分: ${correctAnswers} / ${quizData.length} (${scorePercentage.toFixed(1)}%)`;
+            
+            reviewContainer.innerHTML = '';
+            quizData.forEach((q, index) => {
                 const item = document.createElement('div');
-                item.className = 'review-item';
-                let optionsText = q.options ? Object.entries(q.options).map(([key, val]) => `${key}. ${val}`).join('<br>') : '無選項';
-                item.innerHTML = `<div class="review-question">Q${index + 1}: ${q.question}</div><div>${optionsText}</div><div style="margin-top:10px;"><strong>答案: ${q.answer}</strong></div><div style="margin-top:5px; font-style:italic;">解釋: ${q.explanation}</div>`;
+                const isCorrect = q.userAnswer === q.answer;
+                item.className = `review-item ${isCorrect ? 'correct' : 'incorrect'}`;
+                const optionsText = q.options ? (Array.isArray(q.options) ? q.options : Object.values(q.options)).map((opt, i) => `${String.fromCharCode(65 + i)}. ${opt}`).join('<br>') : '';
+                let userAnswerText = q.userAnswer ? `${q.userAnswer}. ${getOptionText(q, q.userAnswer)}` : '未作答';
+                let answerHtml = `<div class="review-answer">你的答案: ${userAnswerText} ${isCorrect ? '✔' : '❌'}</div>`;
+                if (!isCorrect) {
+                    let correctAnswerText = `${q.answer}. ${getOptionText(q, q.answer)}`;
+                    answerHtml += `<div class="review-answer">正確答案: ${correctAnswerText}</div>`;
+                }
+                item.innerHTML = `<div class="review-question">Q${index + 1}: ${q.question}</div><div style="padding-left: 20px; margin: 10px 0;">${optionsText}</div>${answerHtml}<div class="review-explanation"><strong>解釋:</strong> ${q.explanation}</div>`;
                 reviewContainer.appendChild(item);
-             });
-             showSection(resultsSection);
+            });
+        }
+        
+        function getOptionText(question, key) {
+            if (!key || !question.options) return '';
+            const normalizedKey = key.toUpperCase();
+            if (Array.isArray(question.options)) {
+                const index = ['A', 'B', 'C', 'D'].indexOf(normalizedKey);
+                return index > -1 && question.options[index] ? question.options[index] : '';
+            }
+            return question.options[normalizedKey] || '';
+        }
+
+        function handleQuizExport() {
+            if (quizData.length === 0) { alert('沒有可導出的測驗。'); return; }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(quizData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `ai-quiz_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
         }
 
         function handleCopyCode() {
